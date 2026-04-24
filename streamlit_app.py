@@ -13,22 +13,35 @@ if api_key:
         client = genai.Client(api_key=api_key)
         
         if st.button("Generate Morning Report"):
-            with st.spinner("Searching the web for United rumours..."):
+            with st.spinner("Agent is scouring the web..."):
                 
-                # Using 1.5-flash as it is currently the most reliable for UK-based search grounding
+                # 2026 PROMPT: More specific to ensure high-quality scouting
+                prompt = """
+                Search for the top 5 Manchester United transfer rumours from the last 24 hours.
+                Focus on reputable sources like The Athletic, Fabrizio Romano, and Tier 1 BBC.
+                Rank them for Michael Carrick's 4-2-3-1 'Technical Pivot' system.
+                For each: Player name, Source, Fee, and 'Carrick Fit Score' (1-10).
+                """
+
+                # Using 'gemini-2.5-flash' - the 2026 GA standard for Tools
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash", 
-                    contents="Search for the 3 biggest Man Utd transfer rumours from the last 24 hours. Rank them for a technical 4-2-3-1 system.",
+                    model="gemini-2.5-flash", 
+                    contents=prompt,
                     config=types.GenerateContentConfig(
                         tools=[types.Tool(google_search=types.GoogleSearch())]
                     )
                 )
                 st.markdown(response.text)
+                st.success("Report Generated successfully.")
                 
     except Exception as e:
-        # This will now give you a clearer explanation of the error
-        st.error(f"Agent Error: {e}")
-        if "limit: 0" in str(e):
-            st.warning("💡 **UK Region Detected:** Please ensure you have linked a Billing Account in Google Cloud Console to unlock your free quota.")
+        # Clearer error messaging for common 2026 hurdles
+        error_msg = str(e)
+        if "404" in error_msg:
+            st.error("Model Not Found: Please check your model version in the code.")
+        elif "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+            st.error("Quota full! Wait 60 seconds or check your Google Cloud Billing.")
+        else:
+            st.error(f"Agent Error: {error_msg}")
 else:
     st.info("Paste your API Key (starting with AIza) in the sidebar.")
