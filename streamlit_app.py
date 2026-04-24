@@ -5,34 +5,29 @@ from google.genai import types
 # 1. Page Styling
 st.set_page_config(page_title="United Scout", page_icon="🔴")
 st.title("🔴 MUFC Transfer Scout")
-st.write("Scans the latest rumors and ranks them for the 2026 Carrick system.")
 
-# 2. Key Input
-api_key = st.sidebar.text_input("Gemini API Key", type="password")
+# 2. Key Input - Added .strip() to automatically remove accidental spaces
+raw_key = st.sidebar.text_input("Gemini API Key", type="password")
+api_key = raw_key.strip() 
 
 if api_key:
-    client = genai.Client(api_key=api_key)
-    
-    if st.button("Generate Morning Report"):
-        with st.spinner("Searching for Fabrizio Romano, The Athletic, and news feeds..."):
-            
-            # The Agent's Logic
-            prompt = """
-            Find the top 5 most recent Manchester United transfer rumors from the last 24 hours.
-            Rank them based on fit for Michael Carrick's 2026 system:
-            - Focus: Technical pivots (Mainoo style), inverted wingbacks, and roaming #10s.
-            - Provide: Player name, rumored fee, tactical fit, and a verdict (Strong Buy/Avoid).
-            """
-            
-            # Executing the search + reasoning
-            response = client.models.generate_content(
-                model="gemini-3-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())]
+    try:
+        client = genai.Client(api_key=api_key)
+        
+        if st.button("Generate Morning Report"):
+            with st.spinner("Searching the web for United rumours..."):
+                
+                # Changed to gemini-2.0-flash for maximum stability with the Search tool
+                response = client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents="Find the top 5 Man Utd transfer rumours from the last 24 hours. Rank them for Carrick's 2026 system.",
+                    config=types.GenerateContentConfig(
+                        tools=[types.Tool(google_search=types.GoogleSearch())]
+                    )
                 )
-            )
-            
-            st.markdown(response.text)
+                st.markdown(response.text)
+                
+    except Exception as e:
+        st.error(f"The Agent hit a snag: {e}")
 else:
-    st.info("Enter your API Key in the sidebar to start.")
+    st.info("Paste your API Key in the sidebar. (Make sure it starts with AIza...)")
